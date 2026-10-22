@@ -56,6 +56,13 @@ static void edidChecksum(uint8_t *block) {
 static BOOL patchEDIDForceRGB(uint8_t *edid, size_t length) {
     if (length < 128 || edid[0] != 0x00 || edid[1] != 0xff) return NO;
     BOOL changed = NO;
+    // EDID 1.4 stores YCbCr support in byte 0x18. On 1.3 those same bits are the
+    // display type, and this Dell is 1.3 with them already meaning "RGB color".
+    BOOL edid14 = edid[0x12] == 1 && edid[0x13] >= 4 && (edid[0x14] & 0x80);
+    if (edid14 && (edid[0x18] & 0x18)) {
+        edid[0x18] &= (uint8_t)~0x18;
+        changed = YES;
+    }
     int extensions = edid[126];
     for (int extension = 0; extension < extensions; extension++) {
         size_t offset = (size_t)(extension + 1) * 128;
@@ -300,6 +307,7 @@ static void displayReconfigured(CGDirectDisplayID display, CGDisplayChangeSummar
     self.statusItem = [NSStatusBar.systemStatusBar statusItemWithLength:NSVariableStatusItemLength];
     self.statusItem.button.font = [NSFont monospacedDigitSystemFontOfSize:12 weight:NSFontWeightMedium];
     NSMenu *menu = [NSMenu new];
+    menu.autoenablesItems = NO;
     menu.delegate = self;
     self.statusItem.menu = menu;
     [self refreshTitle];
@@ -322,7 +330,7 @@ static void displayReconfigured(CGDirectDisplayID display, CGDisplayChangeSummar
     if ([NSUserDefaults.standardUserDefaults boolForKey:kForceKey]) {
         BOOL needsApply = NO;
         for (DisplayState *display in externalDisplays()) {
-            if (!display.rgb || !display.overrideActive) needsApply = YES;
+            if (!display.overrideActive) needsApply = YES;
         }
         if (needsApply) [self applyForce:YES];
     }

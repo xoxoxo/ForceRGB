@@ -1,5 +1,6 @@
 APP := ForceRGB.app
 BIN := $(APP)/Contents/MacOS/ForceRGB
+PREFIX ?= /Applications
 
 .PHONY: all run install status clean
 
@@ -19,10 +20,11 @@ run: all
 
 install: all
 	-pkill -x ForceRGB
-	rm -rf /Applications/ForceRGB.app
-	cp -R $(APP) /Applications/
-	codesign --force --sign - /Applications/ForceRGB.app
-	open /Applications/ForceRGB.app
+	mkdir -p "$(PREFIX)"
+	rm -rf "$(PREFIX)/ForceRGB.app"
+	cp -R $(APP) "$(PREFIX)/"
+	codesign --force --sign - "$(PREFIX)/ForceRGB.app"
+	open "$(PREFIX)/ForceRGB.app"
 
 status: all
 	$(BIN) --status

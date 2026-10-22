@@ -24,6 +24,6 @@ make
 make install
 ```
 
-`make install` copies the app to `/Applications` and opens it. The built-in display is left alone.
+`make install` copies the app to `/Applications` and opens it. Use `make install PREFIX=~/Applications` to install it for your user only. The built-in display is left alone.
 
 This uses a private macOS display API, so a future system update can break it.
